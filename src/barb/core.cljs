@@ -73,7 +73,8 @@
 
 (defn draw-individual-on-context [individual context]
   (doseq [polygon individual]
-    (draw-polygon polygon context)))
+    (draw-polygon polygon context))
+  context)
 
 (defn individual->image-data
   "Take a vector of maps representing an individual and return a vector of rgba
@@ -84,19 +85,29 @@
     (draw-individual-on-context individual context)
     (context->image-data context)))
 
-;; make a canvas -> context
-;; draw each polygon on context (lines and colors and alpha)
-;; read in the imagedata from that context
-
 (defn find-individual-context []
   (-> (.getElementById js/document "individual-canvas")
       (.getContext "2d")))
 
+(defn calculate-fitness [reference-image-data individual-image-data]
+  "Takes two vectors of ints 0-255, representing the rgba data for our
+  reference image and individual-image-data, returns the sum of squares
+  difference between the two, which represents how similar the two images are."
+  (let [differences (map - reference-image-data individual-image-data)
+        squares (map #(* % %) differences)
+        sum-of-squares (reduce + squares)
+        maximum-difference (* (count reference-image-data)
+                              (* 256 256))]
+    (- 1 (/ sum-of-squares maximum-difference))))
 
 (defn run []
   (println "Running")
-  (let [image-data (reference-image->image-data)]
-    (draw-individual-on-context (generate-random-individual) (find-individual-context))
+  (let [reference-image-data (reference-image->image-data)
+        individual-image-data (context->image-data 
+                                (draw-individual-on-context
+                                  (generate-random-individual)
+                                  (find-individual-context)))]
+    (println (calculate-fitness reference-image-data individual-image-data))
     (println "Done")))
 
 (.addEventListener
