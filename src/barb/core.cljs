@@ -10,9 +10,13 @@
 
 (def image-size 100)
 (def population-count 5)
-(def polygon-count 50)
+(def polygon-count 10)
 
 (enable-console-print!)
+
+(defn sleep [msec]
+  (let [deadline (+ msec (.getTime (js/Date.)))]
+    (while (> deadline (.getTime (js/Date.))))))
 
 (defn log [x]
   (.log js/console x))
@@ -129,14 +133,31 @@
           dad (rand-nth (remove #{mom} individuals-image-data))]
       (breed mom dad))))
 
+(defn write-image-data-to-context [image-data-to-write context]
+  (let [clamped-array (js/Uint8ClampedArray. image-data-to-write)
+        new-image-data (js/ImageData. clamped-array image-size image-size)]
+    (.putImageData context new-image-data 0 0)))
+
+(defn find-individual-context []
+  (let [canvas (.getElementById js/document "individual-canvas")
+        context (.getContext canvas "2d")]
+    context))
+
 (defn run []
-  (println "Running")
+  (println "Starting")
   (let [reference-image-data (reference-image->image-data)
-        individuals (generate-individuals 1)
-        individuals-image-data (map individual->image-data individuals)]
-    (println "Done")))
+        individuals (generate-individuals 10)
+        individuals-image-data (map individual->image-data individuals)
+        context (find-individual-context)]
+    (loop [x 10
+           population individuals-image-data]
+      (when (> x 0)
+        (let [fittest (select-fittest population reference-image-data)
+              new-generation (breed-generation fittest)]
+          (write-image-data-to-context (first fittest) context)
+          (recur (dec x) new-generaton))))))
 
 (.addEventListener
   js/window
   "DOMContentLoaded"
-  (run))
+  run)
