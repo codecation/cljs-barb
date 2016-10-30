@@ -88,13 +88,15 @@
 ;; draw each polygon on context (lines and colors and alpha)
 ;; read in the imagedata from that context
 
+(defn find-individual-context []
+  (-> (.getElementById js/document "individual-canvas")
+      (.getContext "2d")))
+
+
 (defn run []
   (println "Running")
-  (let [image-data (reference-image->image-data)
-        individual-context (.getContext (.getElementById js/document "individual-canvas") "2d")]
-    ;; (draw-polygon (generate-random-polygon) individual-context)
-    (draw-individual-on-context (generate-random-individual) individual-context)
-
+  (let [image-data (reference-image->image-data)]
+    (draw-individual-on-context (generate-random-individual) (find-individual-context))
     (println "Done")))
 
 (.addEventListener
