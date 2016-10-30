@@ -121,19 +121,10 @@
   (let [reference-image-data (reference-image->image-data)
         individuals (generate-individuals 1)
         individuals-image-data (map individual->image-data individuals)]
-    (println (select-fittest individuals-image-data reference-image-data))
+    ;; (select-fittest individuals-image-data reference-image-data)
     (println "Done")))
 
 (.addEventListener
   js/window
   "DOMContentLoaded"
   (run))
-
-;; algo:
-;; read reference image -> turn into imagedata
-;; generate a population of candidates, randomly
-;; sort by fitness
-;; keep top N
-;; breed those N
-;; mutate a little
-;; repeat
