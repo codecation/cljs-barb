@@ -80,6 +80,7 @@
   "Take a vector of maps representing an individual and return a vector of rgba
   data."
   [individual]
+  ; TODO - pass in a fresh context each time, don't look in DOM, probs slow.
   (let [canvas (.getElementById js/document "individual-canvas")
         context (.getContext canvas "2d")]
     (draw-individual-on-context individual context)
@@ -100,14 +101,27 @@
                               (* 256 256))]
     (- 1 (/ sum-of-squares maximum-difference))))
 
+(def number-of-individuals-to-breed 9)
+
+(defn generate-individuals [n]
+  (repeatedly n generate-random-individual))
+
+(defn select-fittest [individuals-image-data reference-image-data]
+  "Takes a collection of image data representing multiple individuals and the
+  image data for the reference image. Returns the fittest N individuals as
+  determined by calculate-fitness."
+  (take
+    number-of-individuals-to-breed
+    (reverse
+      (sort-by #(calculate-fitness reference-image-data %)
+               individuals-image-data))))
+
 (defn run []
   (println "Running")
   (let [reference-image-data (reference-image->image-data)
-        individual-image-data (context->image-data
-                                (draw-individual-on-context
-                                  (generate-random-individual)
-                                  (find-individual-context)))]
-    (println (calculate-fitness reference-image-data individual-image-data))
+        individuals (generate-individuals 1)
+        individuals-image-data (map individual->image-data individuals)]
+    (println (select-fittest individuals-image-data reference-image-data))
     (println "Done")))
 
 (.addEventListener
