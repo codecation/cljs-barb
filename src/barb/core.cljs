@@ -9,14 +9,12 @@
   (repl/connect "http://localhost:9000/repl"))
 
 (def image-size 100)
-(def population-count 5)
-(def polygon-count 10)
+
+(def individuals-to-breed-each-iteration 3)
+(def individuals-to-start-with 3)
+(def polygon-count 5)
 
 (enable-console-print!)
-
-(defn sleep [msec]
-  (let [deadline (+ msec (.getTime (js/Date.)))]
-    (while (> deadline (.getTime (js/Date.))))))
 
 (defn log [x]
   (.log js/console x))
@@ -101,7 +99,7 @@
                               (* 256 256))]
     (- 1 (/ sum-of-squares maximum-difference))))
 
-(def number-of-individuals-to-breed 10)
+(def number-of-individuals-to-breed 3)
 
 (defn generate-individuals [n]
   (repeatedly n generate-random-individual))
@@ -128,7 +126,7 @@
 (defn breed-generation [individuals-image-data]
   "Given a collection of image data for highly-fit individuals, breed new
   individuals, choosing parents at random."
-  (for [x (range population-count)]
+  (for [x (range individuals-to-breed-each-iteration)]
     (let [mom (rand-nth individuals-image-data)
           dad (rand-nth (remove #{mom} individuals-image-data))]
       (breed mom dad))))
@@ -146,10 +144,10 @@
 (defn run []
   (println "Starting")
   (let [reference-image-data (reference-image->image-data)
-        individuals (generate-individuals 10)
+        individuals (generate-individuals individuals-to-start-with)
         individuals-image-data (map individual->image-data individuals)
         context (find-individual-context)]
-    (loop [x 10
+    (loop [x 50
            population individuals-image-data]
       (when (> x 0)
         (let [fittest (select-fittest population reference-image-data)
