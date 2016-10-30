@@ -103,7 +103,7 @@
 (defn run []
   (println "Running")
   (let [reference-image-data (reference-image->image-data)
-        individual-image-data (context->image-data 
+        individual-image-data (context->image-data
                                 (draw-individual-on-context
                                   (generate-random-individual)
                                   (find-individual-context)))]
