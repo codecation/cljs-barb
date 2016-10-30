@@ -9,7 +9,7 @@
   (repl/connect "http://localhost:9000/repl"))
 
 (def image-size 100)
-(def population-count 50)
+(def population-count 5)
 (def polygon-count 50)
 
 (enable-console-print!)
@@ -76,19 +76,15 @@
     (draw-polygon polygon context))
   context)
 
-(defn individual->image-data
+(defn individual->image-data [individual]
   "Take a vector of maps representing an individual and return a vector of rgba
   data."
-  [individual]
-  ; TODO - pass in a fresh context each time, don't look in DOM, probs slow.
-  (let [canvas (.getElementById js/document "individual-canvas")
-        context (.getContext canvas "2d")]
-    (draw-individual-on-context individual context)
-    (context->image-data context)))
-
-(defn find-individual-context []
-  (-> (.getElementById js/document "individual-canvas")
-      (.getContext "2d")))
+  (let [canvas (.createElement js/document "canvas")]
+    (set! (.-width canvas) image-size)
+    (set! (.-height canvas) image-size)
+    (let [context (.getContext canvas "2d")]
+      (draw-individual-on-context individual context)
+      (context->image-data context))))
 
 (defn calculate-fitness [reference-image-data individual-image-data]
   "Takes two vectors of ints 0-255, representing the rgba data for our
@@ -128,7 +124,7 @@
 (defn breed-generation [individuals-image-data]
   "Given a collection of image data for highly-fit individuals, breed new
   individuals, choosing parents at random."
-  (for [x (range (dec population-count))]
+  (for [x (range population-count)]
     (let [mom (rand-nth individuals-image-data)
           dad (rand-nth (remove #{mom} individuals-image-data))]
       (breed mom dad))))
@@ -138,7 +134,6 @@
   (let [reference-image-data (reference-image->image-data)
         individuals (generate-individuals 1)
         individuals-image-data (map individual->image-data individuals)]
-    ;; (select-fittest individuals-image-data reference-image-data)
     (println "Done")))
 
 (.addEventListener
