@@ -101,7 +101,7 @@
                               (* 256 256))]
     (- 1 (/ sum-of-squares maximum-difference))))
 
-(def number-of-individuals-to-breed 9)
+(def number-of-individuals-to-breed 10)
 
 (defn generate-individuals [n]
   (repeatedly n generate-random-individual))
@@ -115,6 +115,23 @@
     (reverse
       (sort-by #(calculate-fitness reference-image-data %)
                individuals-image-data))))
+
+(defn breed [mother father]
+  "Takes a mother and a father that are both vectors of image data. Return a
+  new individual whose image data is created by choosing values from mom and
+  dad at random."
+  (map
+    #(if (> 0.5 (rand)) %1 %2)
+    mother
+    father))
+
+(defn breed-generation [individuals-image-data]
+  "Given a collection of image data for highly-fit individuals, breed new
+  individuals, choosing parents at random."
+  (for [x (range (dec population-count))]
+    (let [mom (rand-nth individuals-image-data)
+          dad (rand-nth (remove #{mom} individuals-image-data))]
+      (breed mom dad))))
 
 (defn run []
   (println "Running")
