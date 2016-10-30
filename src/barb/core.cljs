@@ -14,6 +14,12 @@
 (defn log [x]
   (.log js/console x))
 
+(defn context->image-data [context]
+  "Takes a js context and returns a vector of rgba image data"
+  (.from js/Array
+         (.-data
+           (.getImageData context 0 0 image-size image-size))))
+
 (defn reference-image->image-data []
   (let [canvas (.getElementById js/document "reference-canvas")
         image (.getElementById js/document "reference")
@@ -21,9 +27,7 @@
     (set! (.-width canvas) image-size)
     (set! (.-height canvas) image-size)
     (.drawImage context image 0 0)
-    (.from js/Array
-      (.-data
-        (.getImageData context 0 0 image-size image-size)))))
+    (context->image-data context)))
 
 (defn generate-random-polygon []
   ;;  TODO: spec for this
@@ -38,13 +42,29 @@
   "An individual is a collection of polygons"
   (repeatedly polygon-count generate-random-polygon))
 
+(defn draw-polygon [polygon context]
+  nil)
+
+(defn draw-individual-on-context [individual context]
+  (doseq [polygon individual]
+    (draw-polygon polygon context))
+
 (defn individual->image-data
   "Take a vector of maps representing an individual and return a vector of rgba
   data."
   [individual]
+  (let [canvas (.getElementById js/document "individual-canvas")
+        context (.getContext canvas "2d")]
+    ; todo: move these size things out, do once
+    (set! (.-width canvas) image-size)
+    (set! (.-height canvas) image-size)
+    (draw-individual-on-context individual context)
+    (context->image-data context)))
+
   ;; make a canvas -> context
   ;; draw each polygon on context (lines and colors and alpha)
-  nil
+  ;; read in the imagedata from that context
+
   )
 
 
