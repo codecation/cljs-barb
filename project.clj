@@ -10,5 +10,6 @@
   :clean-targets ["out" "release"]
   :target-path "target"
   :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
-                                  [org.clojure/tools.nrepl "0.2.10"]]
+                                  [org.clojure/tools.nrepl "0.2.10"]
+                                  [org.clojure/test.check "0.9.0"]]
                    :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}})

@@ -3,10 +3,15 @@
             [cljs.spec :as s]
             [goog.string :as gstring]
             [goog.string.format]
-            ))
+            [goog.string.format]
+            [clojure.test.check :as tc]
+            [clojure.spec.test :as stest]
+            [cljs.spec.impl.gen :as gen]))
 
-(defonce conn
-  (repl/connect "http://localhost:9000/repl"))
+;; (defonce conn
+;;   (repl/connect "http://localhost:9000/repl"))
+
+(enable-console-print!)
 
 (def image-size 100)
 
@@ -30,7 +35,7 @@
     (.drawImage context image 0 0)
     (context->image-data context)))
 
-(defn generate-random-polygon []
+(defn generate-random-polygon [x]
   {
    ::x1 (rand-int image-size) ::y1 (rand-int image-size)
    ::x2 (rand-int image-size) ::y2 (rand-int image-size)
@@ -38,19 +43,21 @@
    ::r (rand-int 256) ::g (rand-int 256) ::b (rand-int 256) ::a (rand)
    })
 
-(s/def ::x1 (s/and integer? #(= (count %) image-size)))
-(s/def ::x2 (s/and integer? #(= (count %) image-size)))
-(s/def ::x3 (s/and integer? #(= (count %) image-size)))
-(s/def ::y1 (s/and integer? #(= (count %) image-size)))
-(s/def ::y2 (s/and integer? #(= (count %) image-size)))
-(s/def ::y3 (s/and integer? #(= (count %) image-size)))
-(s/def ::r (s/and integer? #(> 0 % 256)))
-(s/def ::g (s/and integer? #(> 0 % 256)))
-(s/def ::b (s/and integer? #(> 0 % 256)))
-(s/def ::a (s/and integer? #(> 0 % 256)))
+(s/def ::x1 (s/and integer? #(< % image-size)))
+(s/def ::x2 (s/and integer? #(< % image-size)))
+(s/def ::x3 (s/and integer? #(< % image-size)))
+(s/def ::y1 (s/and integer? #(< % image-size)))
+(s/def ::y2 (s/and integer? #(< % image-size)))
+(s/def ::y3 (s/and integer? #(< % image-size)))
+(s/def ::r (s/and integer? #(<= 0 % 256)))
+(s/def ::g (s/and integer? #(<= 0 % 256)))
+(s/def ::b (s/and integer? #(<= 0 % 256)))
+(s/def ::a (s/and float? #(<= 0 % 1)))
 (s/def ::polygon (s/keys :req [::x1 ::y2 ::x2 ::y2 ::x3 ::y3 ::r ::g ::b ::a]))
 
-(s/explain-data ::polygon (generate-random-polygon))
+(s/fdef generate-random-polygon :args (s/cat :x int?) :ret ::polygon)
+
+(println (stest/check `generate-random-polygon))
 
 (defn generate-random-individual []
   "An individual is a collection of polygons."
@@ -169,8 +176,6 @@
 (.addEventListener
   js/window
   "DOMContentLoaded"
-  (log "i run"))
+  (log "Done loading"))
 
 (s/def ::image-data (s/and vector? #(= (count %) (* image-size image-size 4))))
-
-
