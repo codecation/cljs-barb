@@ -14,8 +14,6 @@
 (def individuals-to-start-with 3)
 (def polygon-count 5)
 
-(enable-console-print!)
-
 (defn log [x]
   (.log js/console x))
 
@@ -33,13 +31,26 @@
     (context->image-data context)))
 
 (defn generate-random-polygon []
-  ;;  TODO: spec for this
   {
-   :x1 (rand-int image-size) :y1 (rand-int image-size)
-   :x2 (rand-int image-size) :y2 (rand-int image-size)
-   :x3 (rand-int image-size) :y3 (rand-int image-size)
-   :r (rand-int 256) :g (rand-int 256) :b (rand-int 256) :a (rand)
+   ::x1 (rand-int image-size) ::y1 (rand-int image-size)
+   ::x2 (rand-int image-size) ::y2 (rand-int image-size)
+   ::x3 (rand-int image-size) ::y3 (rand-int image-size)
+   ::r (rand-int 256) ::g (rand-int 256) ::b (rand-int 256) ::a (rand)
    })
+
+(s/def ::x1 (s/and integer? #(= (count %) image-size)))
+(s/def ::x2 (s/and integer? #(= (count %) image-size)))
+(s/def ::x3 (s/and integer? #(= (count %) image-size)))
+(s/def ::y1 (s/and integer? #(= (count %) image-size)))
+(s/def ::y2 (s/and integer? #(= (count %) image-size)))
+(s/def ::y3 (s/and integer? #(= (count %) image-size)))
+(s/def ::r (s/and integer? #(> 0 % 256)))
+(s/def ::g (s/and integer? #(> 0 % 256)))
+(s/def ::b (s/and integer? #(> 0 % 256)))
+(s/def ::a (s/and integer? #(> 0 % 256)))
+(s/def ::polygon (s/keys :req [::x1 ::y2 ::x2 ::y2 ::x3 ::y3 ::r ::g ::b ::a]))
+
+(s/explain-data ::polygon (generate-random-polygon))
 
 (defn generate-random-individual []
   "An individual is a collection of polygons."
@@ -153,9 +164,13 @@
         (let [fittest (select-fittest population reference-image-data)
               new-generation (breed-generation fittest)]
           (write-image-data-to-context (first fittest) context)
-          (recur (dec x) new-generaton))))))
+          (recur (dec x) new-generation))))))
 
 (.addEventListener
   js/window
   "DOMContentLoaded"
-  run)
+  (log "i run"))
+
+(s/def ::image-data (s/and vector? #(= (count %) (* image-size image-size 4))))
+
+
