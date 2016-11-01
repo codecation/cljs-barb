@@ -1,7 +1,7 @@
 (defproject barb "0.1.0-SNAPSHOT"
   :description "Genetic image generator"
   :url "http://example.com/FIXME"
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/clojurescript "1.9.293"]]
   :jvm-opts ^:replace ["-Xmx1g" "-server"]
   :plugins [[lein-npm "0.6.1"]]

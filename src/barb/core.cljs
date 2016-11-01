@@ -1,19 +1,15 @@
 (ns barb.core
   (:require [clojure.browser.repl :as repl]
-            [cljs.spec :as s]
             [goog.string :as gstring]
-            [goog.string.format]
-            [goog.string.format]
-            [clojure.test.check :as tc]
-            [clojure.spec.test :as stest]
-            [cljs.spec.impl.gen :as gen]))
+            [goog.string.format]))
 
 ;; (defonce conn
 ;;   (repl/connect "http://localhost:9000/repl"))
 
 (enable-console-print!)
 
-(def image-size 100)
+;; todo - change this
+(def image-size 4)
 
 (def individuals-to-breed-each-iteration 3)
 (def individuals-to-start-with 3)
@@ -43,31 +39,9 @@
    ::r (rand-int 256) ::g (rand-int 256) ::b (rand-int 256) ::a (rand)
    })
 
-(s/def ::x1 (s/and integer? #(< % image-size)))
-(s/def ::x2 (s/and integer? #(< % image-size)))
-(s/def ::x3 (s/and integer? #(< % image-size)))
-(s/def ::y1 (s/and integer? #(< % image-size)))
-(s/def ::y2 (s/and integer? #(< % image-size)))
-(s/def ::y3 (s/and integer? #(< % image-size)))
-(s/def ::r (s/and integer? #(<= 0 % 256)))
-(s/def ::g (s/and integer? #(<= 0 % 256)))
-(s/def ::b (s/and integer? #(<= 0 % 256)))
-(s/def ::a (s/and float? #(<= 0 % 1)))
-(s/def ::polygon (s/keys :req [::x1 ::y2 ::x2 ::y2 ::x3 ::y3 ::r ::g ::b ::a]))
-
-(s/fdef generate-random-polygon :args (s/cat :x int?) :ret ::polygon)
-
-;; (println (stest/check `generate-random-polygon))
-
 (defn generate-random-individual [n]
   "An individual is a collection of polygons."
-  (repeatedly n (generate-random-polygon)))
-
-(s/fdef generate-random-individual
-        :args (s/and (s/cat :x int?) #(> (:x %) 0))
-        :ret (s/and coll? #(= (count %) x)))
-
-(println (stest/check `generate-random-individual))
+  (repeatedly n generate-random-polygon))
 
 (defn alpha-int->float [i]
   "Take an int representing the alpha (0-255), scale to 0.0-1.0."
@@ -183,5 +157,3 @@
   js/window
   "DOMContentLoaded"
   (log "Done loading"))
-
-(s/def ::image-data (s/and vector? #(= (count %) (* image-size image-size 4))))
