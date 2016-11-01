@@ -35,7 +35,7 @@
     (.drawImage context image 0 0)
     (context->image-data context)))
 
-(defn generate-random-polygon
+(defn generate-random-polygon []
   {
    ::x1 (rand-int image-size) ::y1 (rand-int image-size)
    ::x2 (rand-int image-size) ::y2 (rand-int image-size)
