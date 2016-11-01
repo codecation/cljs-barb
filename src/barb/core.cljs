@@ -35,7 +35,7 @@
     (.drawImage context image 0 0)
     (context->image-data context)))
 
-(defn generate-random-polygon [x]
+(defn generate-random-polygon
   {
    ::x1 (rand-int image-size) ::y1 (rand-int image-size)
    ::x2 (rand-int image-size) ::y2 (rand-int image-size)
@@ -57,11 +57,17 @@
 
 (s/fdef generate-random-polygon :args (s/cat :x int?) :ret ::polygon)
 
-(println (stest/check `generate-random-polygon))
+;; (println (stest/check `generate-random-polygon))
 
-(defn generate-random-individual []
+(defn generate-random-individual [n]
   "An individual is a collection of polygons."
-  (repeatedly polygon-count generate-random-polygon))
+  (repeatedly n (generate-random-polygon)))
+
+(s/fdef generate-random-individual
+        :args (s/and (s/cat :x int?) #(> (:x %) 0))
+        :ret (s/and coll? #(= (count %) x)))
+
+(println (stest/check `generate-random-individual))
 
 (defn alpha-int->float [i]
   "Take an int representing the alpha (0-255), scale to 0.0-1.0."
