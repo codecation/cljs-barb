@@ -24,7 +24,7 @@
 (s/def ::image-data
   (s/and vector? #(= (count %) (* b/image-size b/image-size 4))))
 
-(s/fdef b/generate-random-polygon :args (s/cat) :ret ::polygon)
+(s/fdef b/generate-random-polygon :ret ::polygon)
 
 (s/fdef b/generate-random-individual
         :args (s/cat :x int?)
@@ -35,4 +35,3 @@
         :ret (s/and float? #(< 0 % 1)))
 
 (s/exercise-fn `b/calculate-fitness)
-
