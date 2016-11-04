@@ -3,17 +3,17 @@
             [goog.string :as gstring]
             [goog.string.format]))
 
-(defonce conn
-  (repl/connect "http://localhost:9000/repl"))
-
 (enable-console-print!)
 
 ;; todo - change this
-(def image-size 10)
+(def image-size 100)
 
 (def individuals-to-breed-each-iteration 3)
 (def individuals-to-start-with 3)
 (def polygon-count 3)
+(def mutation-chance 0.5)
+(def mutation-delta 30)
+(def mutation-float-delta 0.2)
 
 (defn log [x]
   (.log js/console x))
@@ -112,8 +112,32 @@
         context (.getContext canvas "2d")]
     context))
 
-(defn mutate [image-data]
-  "Take a vector of rgba values and mutate some of them at random."
+(defn maybe-mutate [x]
+  "Returns x or an x that is larger or smaller by mutation-delta."
+  (if (> (rand) (- 1 mutation-chance))
+    (+ x (rand-nth (range (- mutation-delta)
+                          mutation-delta)))
+    x))
+
+(defn maybe-mutate-float [x]
+  "Returns x or an x that is larger or smaller by mutation-float-delta."
+  (if (> (rand) (- 1 mutation-chance))
+    (+ x (rand-nth (range (- mutation-float-delta) mutation-float-delta 0.05)))
+    x))
+
+(defn mutate [individual]
+  "Takes an individual and mutates some of its attributes at random"
+    (-> individual
+        (update ::x1 maybe-mutate)
+        (update ::y1 maybe-mutate)
+        (update ::x2 maybe-mutate)
+        (update ::y2 maybe-mutate)
+        (update ::x3 maybe-mutate)
+        (update ::y3 maybe-mutate)
+        (update ::r maybe-mutate)
+        (update ::g maybe-mutate)
+        (update ::b maybe-mutate)
+        (update ::a maybe-mutate-float)))
 
 (defn run []
   (println "Starting")
@@ -124,7 +148,9 @@
     (loop [x 50
            best-yet-image-data individual-image-data
            candidate-image-data individual-image-data]
+      (println (str "iteration: " x))
       (when (> x 0)
+        (write-image-data-to-context best-yet-image-data context)
         (if (> (calculate-fitness reference-image-data candidate-image-data)
                (calculate-fitness reference-image-data best-yet-image-data))
           (recur (dec x) candidate-image-data (mutate candidate-image-data))
