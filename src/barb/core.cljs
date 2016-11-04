@@ -142,19 +142,33 @@
 (defn run []
   (println "Starting")
   (let [reference-image-data (reference-image->image-data)
-        individual-image-data (individual->image-data (generate-random-individual))
+        individual (generate-random-individual)
+        individual-image-data (individual->image-data individual)
         context (find-individual-context)]
-    (println "Going")
     (loop [x 50
+           best-yet-individual individual
            best-yet-image-data individual-image-data
+           candidate-individual individual
            candidate-image-data individual-image-data]
       (println (str "iteration: " x))
       (when (> x 0)
         (write-image-data-to-context best-yet-image-data context)
         (if (> (calculate-fitness reference-image-data candidate-image-data)
                (calculate-fitness reference-image-data best-yet-image-data))
-          (recur (dec x) candidate-image-data (mutate candidate-image-data))
-          (recur (dec x) best-yet-image-data (mutate best-yet-image-data)))))))
+          (let [new-candidate (mutate candidate-individual)
+                new-image-data (individual->image-data new-candidate)]
+            (recur (dec x)
+                   candidate-individual
+                   candidate-image-data
+                   new-candidate
+                   new-image-data))
+          (let [new-candidate (mutate best-yet-individual)
+                new-image-data (individual->image-data new-candidate)]
+            (recur (dec x)
+                   best-yet-individual
+                   best-yet-image-data
+                   new-candidate
+                   new-image-data)))))))
 
 (.addEventListener
   js/window
