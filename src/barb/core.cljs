@@ -3,17 +3,17 @@
             [goog.string :as gstring]
             [goog.string.format]))
 
-;; (defonce conn
-;;   (repl/connect "http://localhost:9000/repl"))
+(defonce conn
+  (repl/connect "http://localhost:9000/repl"))
 
 (enable-console-print!)
 
 ;; todo - change this
-(def image-size 4)
+(def image-size 10)
 
 (def individuals-to-breed-each-iteration 3)
 (def individuals-to-start-with 3)
-(def polygon-count 5)
+(def polygon-count 3)
 
 (defn log [x]
   (.log js/console x))
@@ -65,9 +65,9 @@
   "Draw a polygon on a context."
   (set! (.-fillStyle context) (polygon->rgba-string polygon))
   (.beginPath context)
-  (.moveTo context (:x1 polygon) (:y1 polygon))
-  (.lineTo context (:x2 polygon) (:y2 polygon))
-  (.lineTo context (:x3 polygon) (:y3 polygon))
+  (.moveTo context (::x1 polygon) (::y1 polygon))
+  (.lineTo context (::x2 polygon) (::y2 polygon))
+  (.lineTo context (::x3 polygon) (::y3 polygon))
   (.closePath context)
   (.fill context))
 
@@ -76,15 +76,20 @@
     (draw-polygon polygon context))
   context)
 
-(defn individual->image-data [individual]
-  "Take a vector of maps representing an individual and return a vector of rgba
-  data."
+(defn make-context []
+  "Returns an in-memory (not in the DOM) context"
   (let [canvas (.createElement js/document "canvas")]
     (set! (.-width canvas) image-size)
     (set! (.-height canvas) image-size)
     (let [context (.getContext canvas "2d")]
-      (draw-individual-on-context individual context)
-      (context->image-data context))))
+      context)))
+
+(defn individual->image-data [individual]
+  "Take a vector of maps representing an individual and return a vector of rgba
+  data."
+  (let [context (make-context)]
+    (draw-individual-on-context individual context)
+    (context->image-data context)))
 
 (defn calculate-fitness [reference-image-data individual-image-data]
   "Takes two vectors of ints 0-255, representing the rgba data for our
@@ -97,38 +102,6 @@
                               (* 256 256))]
     (- 1 (/ sum-of-squares maximum-difference))))
 
-(def number-of-individuals-to-breed 3)
-
-(defn generate-individuals [n]
-  (repeatedly n generate-random-individual))
-
-(defn select-fittest [individuals-image-data reference-image-data]
-  "Takes a collection of image data representing multiple individuals and the
-  image data for the reference image. Returns the fittest N individuals as
-  determined by calculate-fitness."
-  (take
-    number-of-individuals-to-breed
-    (reverse
-      (sort-by #(calculate-fitness reference-image-data %)
-               individuals-image-data))))
-
-(defn breed [mother father]
-  "Takes a mother and a father that are both vectors of image data. Return a
-  new individual whose image data is created by choosing values from mom and
-  dad at random."
-  (map
-    #(if (> 0.5 (rand)) %1 %2)
-    mother
-    father))
-
-(defn breed-generation [individuals-image-data]
-  "Given a collection of image data for highly-fit individuals, breed new
-  individuals, choosing parents at random."
-  (for [x (range individuals-to-breed-each-iteration)]
-    (let [mom (rand-nth individuals-image-data)
-          dad (rand-nth (remove #{mom} individuals-image-data))]
-      (breed mom dad))))
-
 (defn write-image-data-to-context [image-data-to-write context]
   (let [clamped-array (js/Uint8ClampedArray. image-data-to-write)
         new-image-data (js/ImageData. clamped-array image-size image-size)]
@@ -139,24 +112,27 @@
         context (.getContext canvas "2d")]
     context))
 
+(defn mutate [image-data]
+  "Take a vector of rgba values and mutate some of them at random."
+
 (defn run []
   (println "Starting")
   (let [reference-image-data (reference-image->image-data)
-        individuals (generate-individuals individuals-to-start-with)
-        individuals-image-data (map individual->image-data individuals)
+        individual-image-data (individual->image-data (generate-random-individual))
         context (find-individual-context)]
     (println "Going")
     (loop [x 50
-           population individuals-image-data]
-      (println (str "Iteration: " (- 50 x)))
-      (println population)
+           best-yet-image-data individual-image-data
+           candidate-image-data individual-image-data]
       (when (> x 0)
-        (let [fittest (select-fittest population reference-image-data)
-              new-generation (breed-generation fittest)]
-          (write-image-data-to-context (first fittest) context)
-          (recur (dec x) new-generation))))))
+        (if (> (calculate-fitness reference-image-data candidate-image-data)
+               (calculate-fitness reference-image-data best-yet-image-data))
+          (recur (dec x) candidate-image-data (mutate candidate-image-data))
+          (recur (dec x) best-yet-image-data (mutate best-yet-image-data)))))))
 
 (.addEventListener
   js/window
   "DOMContentLoaded"
-  (run))
+  (let [individual (generate-random-individual)
+        context (find-individual-context)]
+    (run)))
