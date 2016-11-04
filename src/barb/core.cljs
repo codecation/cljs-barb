@@ -39,9 +39,9 @@
    ::r (rand-int 256) ::g (rand-int 256) ::b (rand-int 256) ::a (rand)
    })
 
-(defn generate-random-individual [n]
+(defn generate-random-individual []
   "An individual is a collection of polygons."
-  (repeatedly n generate-random-polygon))
+  (repeatedly polygon-count generate-random-polygon))
 
 (defn alpha-int->float [i]
   "Take an int representing the alpha (0-255), scale to 0.0-1.0."
@@ -52,13 +52,13 @@
   where r, g, b are ints 0-255, a is a float 0-1."
   (str
     "rgba("
-    (:r polygon)
+    (::r polygon)
     ","
-    (:g polygon)
+    (::g polygon)
     ","
-    (:b polygon)
+    (::b polygon)
     ","
-    (gstring/format "%.2f" (:a polygon))
+    (gstring/format "%.2f" (::a polygon))
     ")"))
 
 (defn draw-polygon [polygon context]
@@ -145,8 +145,11 @@
         individuals (generate-individuals individuals-to-start-with)
         individuals-image-data (map individual->image-data individuals)
         context (find-individual-context)]
+    (println "Going")
     (loop [x 50
            population individuals-image-data]
+      (println (str "Iteration: " (- 50 x)))
+      (println population)
       (when (> x 0)
         (let [fittest (select-fittest population reference-image-data)
               new-generation (breed-generation fittest)]
@@ -156,4 +159,4 @@
 (.addEventListener
   js/window
   "DOMContentLoaded"
-  (log "Done loading"))
+  (run))

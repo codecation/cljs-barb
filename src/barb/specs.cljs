@@ -34,4 +34,8 @@
         :args (s/cat :reference ::image-data :individual ::image-data)
         :ret (s/and float? #(< 0 % 1)))
 
-(s/exercise-fn `b/calculate-fitness)
+(s/fdef b/polygon->rgba-string
+        :args ::polygon
+        :ret string?)
+
+(stest/instrument `b/polygon->rgba-string)
