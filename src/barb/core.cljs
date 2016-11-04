@@ -11,11 +11,9 @@
 
 
 (def image-size 100)
-
-(def individuals-to-breed-each-iteration 3)
-(def individuals-to-start-with 3)
-(def polygon-count 3)
-(def mutation-chance 0.5)
+(def max-iterations 1000)
+(def polygon-count 120)
+(def mutation-chance 0.05)
 (def mutation-delta 30)
 (def mutation-float-delta 0.2)
 
@@ -182,7 +180,7 @@
         individual (generate-random-individual)
         individual-image-data (individual->image-data individual)
         context (find-individual-context)]
-    (loop [x 50
+    (loop [x max-iterations
            best-yet-individual individual
            best-yet-image-data individual-image-data
            candidate-individual individual
