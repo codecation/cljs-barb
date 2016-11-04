@@ -2,19 +2,18 @@
   (:require [clojure.browser.repl :as repl]
             [goog.string :as gstring]
             [goog.string.format]
+            [cljs.core.async :refer [chan close!]]
             [cljs.spec :as s]
             [clojure.test.check :as tc]
             [clojure.spec.test :as stest]
-            [cljs.spec.impl.gen :as gen]))
+            [cljs.spec.impl.gen :as gen])
+  (:require-macros
+    [cljs.core.async.macros :as m :refer [go]]))
 
 (enable-console-print!)
 
-
 (def image-size 100)
-
-(def individuals-to-breed-each-iteration 3)
-(def individuals-to-start-with 3)
-(def polygon-count 3)
+(def polygon-count 10)
 (def mutation-chance 0.5)
 (def mutation-delta 30)
 (def mutation-float-delta 0.2)
@@ -187,19 +186,8 @@
            best-yet-image-data individual-image-data
            candidate-individual individual
            candidate-image-data individual-image-data]
-      (println (str "iteration: " x))
-      (println (str "best-yet-individual: " best-yet-individual))
-      (println (str "best-yet-image-data: " best-yet-image-data))
-      (println)
-      (println)
-      (println)
-      (println "========================================================")
-      (println)
-      (println)
-      (println)
-      (println (str "candidate-individual: " candidate-individual))
-      (println (str "candidate-image-data: " candidate-image-data))
       (when (> x 0)
+        (println "it: " x)
         (write-image-data-to-context best-yet-image-data context)
         (if (> (calculate-fitness reference-image-data candidate-image-data)
                (calculate-fitness reference-image-data best-yet-image-data))

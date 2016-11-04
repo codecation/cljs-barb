@@ -2,7 +2,8 @@
   :description "Genetic image generator"
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
-                 [org.clojure/clojurescript "1.9.293"]]
+                 [org.clojure/clojurescript "1.9.293"]
+                 [org.clojure/core.async "0.2.395"]]
   :jvm-opts ^:replace ["-Xmx1g" "-server"]
   :plugins [[lein-npm "0.6.1"]]
   :npm {:dependencies [[source-map-support "0.4.0"]]}
