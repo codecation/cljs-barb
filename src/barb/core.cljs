@@ -3,15 +3,15 @@
             [goog.string :as gstring]
             [goog.string.format]
             [cljs.spec :as s]
+            [cljs.core.async :refer [chan close!]]
             [clojure.test.check :as tc]
             [clojure.spec.test :as stest]
             [cljs.spec.impl.gen :as gen]))
 
 (enable-console-print!)
 
-
 (def image-size 100)
-(def max-iterations 1000)
+(def max-iterations 10)
 (def polygon-count 120)
 (def mutation-chance 0.05)
 (def mutation-delta 30)
@@ -185,18 +185,6 @@
            best-yet-image-data individual-image-data
            candidate-individual individual
            candidate-image-data individual-image-data]
-      (println (str "iteration: " x))
-      (println (str "best-yet-individual: " best-yet-individual))
-      (println (str "best-yet-image-data: " best-yet-image-data))
-      (println)
-      (println)
-      (println)
-      (println "========================================================")
-      (println)
-      (println)
-      (println)
-      (println (str "candidate-individual: " candidate-individual))
-      (println (str "candidate-image-data: " candidate-image-data))
       (when (> x 0)
         (write-image-data-to-context best-yet-image-data context)
         (if (> (calculate-fitness reference-image-data candidate-image-data)
