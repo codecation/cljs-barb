@@ -1,4 +1,5 @@
 (ns barb.core
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.browser.repl :as repl]
             [goog.string :as gstring]
             [goog.string.format]
@@ -6,49 +7,17 @@
             [cljs.core.async :refer [chan close!]]
             [clojure.test.check :as tc]
             [clojure.spec.test :as stest]
+            [cljs.core.async :refer [put! chan <! >! timeout close!]]
             [cljs.spec.impl.gen :as gen]))
 
 (enable-console-print!)
 
 (def image-size 100)
-(def max-iterations 10)
+(def max-iterations 30)
 (def polygon-count 120)
 (def mutation-chance 0.05)
 (def mutation-delta 30)
 (def mutation-float-delta 0.2)
-
-(s/def ::x-y-coordinate (s/and integer? #(< % image-size)))
-(s/def ::x1 ::x-y-coordinate)
-(s/def ::x2 ::x-y-coordinate)
-(s/def ::x3 ::x-y-coordinate)
-(s/def ::y1 ::x-y-coordinate)
-(s/def ::y2 ::x-y-coordinate)
-(s/def ::y3 ::x-y-coordinate)
-(s/def ::rgb-val (s/and integer? #(<= 0 % 256)))
-(s/def ::r ::rgb-val)
-(s/def ::g ::rgb-val)
-(s/def ::b ::rgb-val)
-(s/def ::a (s/and float? #(<= 0 % 1)))
-(s/def ::polygon (s/keys :req [::x1 ::y2 ::x2 ::y2 ::x3 ::y3 ::r ::g ::b ::a]))
-
-(s/def ::individual (s/coll-of ::polygon))
-
-(s/def ::image-data
-  (s/and vector? #(= (count %) (* image-size image-size 4))))
-
-(s/fdef generate-random-polygon :ret ::polygon)
-
-(s/fdef generate-random-individual
-        :args (s/cat :x int?)
-        :ret ::individual)
-
-(s/fdef calculate-fitness
-        :args (s/cat :reference ::image-data :individual ::image-data)
-        :ret (s/and float? #(< 0 % 1)))
-
-(s/fdef polygon->rgba-string
-        :args ::polygon
-        :ret string?)
 
 (defn log [x]
   (.log js/console x))
@@ -174,22 +143,26 @@
         (update ::b maybe-mutate)
         (update ::a maybe-mutate-float)))
 
+;; (stest/instrument)
+
 (defn run []
   (println "Starting")
   (let [reference-image-data (reference-image->image-data)
         individual (generate-random-individual)
         individual-image-data (individual->image-data individual)
         context (find-individual-context)]
-    (loop [x max-iterations
-           best-yet-individual individual
-           best-yet-image-data individual-image-data
-           candidate-individual individual
-           candidate-image-data individual-image-data]
-      (when (> x 0)
-        (write-image-data-to-context best-yet-image-data context)
-        (if (> (calculate-fitness reference-image-data candidate-image-data)
-               (calculate-fitness reference-image-data best-yet-image-data))
-          (let [new-candidate (map mutate-polygon candidate-individual)
+    (go-loop [x max-iterations
+              best-yet-individual individual
+              best-yet-image-data individual-image-data
+              candidate-individual individual
+              candidate-image-data individual-image-data]
+             (println "it: " x)
+             (when (> x 0)
+               (write-image-data-to-context best-yet-image-data context)
+               (<! (timeout 0))
+               (if (> (calculate-fitness reference-image-data candidate-image-data)
+                      (calculate-fitness reference-image-data best-yet-image-data))
+                 (let [new-candidate (map mutate-polygon candidate-individual)
                 new-image-data (individual->image-data new-candidate)]
             (recur (dec x)
                    candidate-individual

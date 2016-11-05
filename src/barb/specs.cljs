@@ -35,7 +35,9 @@
         :ret (s/and float? #(< 0 % 1)))
 
 (s/fdef b/polygon->rgba-string
-        :args ::polygon
+        :args (s/cat :poly ::polygon)
         :ret string?)
 
-(stest/instrument `b/polygon->rgba-string)
+(s/fdef mutate-polygon
+        :args (s/cat :poly ::polygon)
+        :ret ::polygon)
