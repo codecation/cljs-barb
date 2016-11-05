@@ -143,30 +143,54 @@
         (update ::b maybe-mutate)
         (update ::a maybe-mutate-float)))
 
-;; (stest/instrument)
+(stest/instrument)
 
-(defn execute [reference-image-data best-yet-individual best-yet-image-data best-yet-fitness candidate-individual candidate-image-data context]
-  (let [candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
-    (write-image-data-to-context best-yet-image-data context)
+(def state (atom {}))
+
+(defn update-state
+  []
+  (let [{reference-image-data ::reference-image-data
+         best-yet-individual ::best-yet-individual
+         best-yet-image-data ::best-yet-image-data
+         best-yet-fitness ::best-yet-fitness
+         candidate-individual ::candidate-individual
+         candidate-image-data ::candidate-image-data
+         context ::context} @state
+        candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
     (if (> candidate-fitness best-yet-fitness)
       (let [new-candidate (map mutate-polygon candidate-individual)
             new-image-data (individual->image-data new-candidate)]
-        [candidate-individual candidate-image-data candidate-fitness new-candidate new-image-data])
+        (swap! state assoc
+               ::best-yet-individual candidate-individual
+               ::best-yet-image-data candidate-image-data
+               ::best-yet-fitness candidate-fitness
+               ::candidate-individual new-candidate
+               ::candidate-image-data new-image-data))
       (let [new-candidate (map mutate-polygon best-yet-individual)
             new-image-data (individual->image-data new-candidate)]
-        [best-yet-individual best-yet-image-data best-yet-fitness new-candidate new-image-data]))))
+        (swap! state assoc
+               ::candidate-individual new-candidate
+               ::candidate-image-data new-image-data)))))
 
 (defn run []
-  (let [reference-image-data (reference-image->image-data)
-        individual (generate-random-individual)
+  (let [individual (generate-random-individual)
         individual-image-data (individual->image-data individual)
-        context (find-individual-context)
-        best-yet-individual individual
-        best-yet-image-data individual-image-data
-        best-yet-fitness (calculate-fitness reference-image-data best-yet-image-data)
-        candidate-individual individual
-        candidate-image-data individual-image-data]
-    (execute reference-image-data best-yet-individual best-yet-image-data best-yet-fitness candidate-individual candidate-image-data context)))
+        reference-image-data (reference-image->image-data)]
+    (reset! state
+            {
+             ::reference-image-data (reference-image->image-data)
+             ::individual (generate-random-individual)
+             ::individual-image-data (individual->image-data individual)
+             ::context (find-individual-context)
+             ::best-yet-individual individual
+             ::best-yet-image-data individual-image-data
+             ::best-yet-fitness (calculate-fitness reference-image-data individual-image-data)
+             ::candidate-individual individual
+             ::candidate-image-data individual-image-data
+             })
+    (println @state)
+    (write-image-data-to-context (::best-yet-image-data @state) (::context @state))
+    (update-state)))
 
 (.addEventListener
   js/window
