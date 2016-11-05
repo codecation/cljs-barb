@@ -154,28 +154,31 @@
     (go-loop [x max-iterations
               best-yet-individual individual
               best-yet-image-data individual-image-data
+              best-yet-fitness (calculate-fitness reference-image-data best-yet-image-data)
               candidate-individual individual
               candidate-image-data individual-image-data]
              (println "it: " x)
              (when (> x 0)
                (write-image-data-to-context best-yet-image-data context)
                (<! (timeout 0))
-               (if (> (calculate-fitness reference-image-data candidate-image-data)
-                      (calculate-fitness reference-image-data best-yet-image-data))
-                 (let [new-candidate (map mutate-polygon candidate-individual)
-                new-image-data (individual->image-data new-candidate)]
-            (recur (dec x)
-                   candidate-individual
-                   candidate-image-data
-                   new-candidate
-                   new-image-data))
-          (let [new-candidate (map mutate-polygon best-yet-individual)
-                new-image-data (individual->image-data new-candidate)]
-            (recur (dec x)
-                   best-yet-individual
-                   best-yet-image-data
-                   new-candidate
-                   new-image-data)))))))
+               (let [candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
+                 (if (> candidate-fitness best-yet-fitness)
+                   (let [new-candidate (map mutate-polygon candidate-individual)
+                         new-image-data (individual->image-data new-candidate)]
+                     (recur (dec x)
+                            candidate-individual
+                            candidate-image-data
+                            candidate-fitness
+                            new-candidate
+                            new-image-data))
+                   (let [new-candidate (map mutate-polygon best-yet-individual)
+                         new-image-data (individual->image-data new-candidate)]
+                     (recur (dec x)
+                            best-yet-individual
+                            best-yet-image-data
+                            best-yet-fitness
+                            new-candidate
+                            new-image-data))))))))
 
 (.addEventListener
   js/window
