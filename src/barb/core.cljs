@@ -13,7 +13,7 @@
 (enable-console-print!)
 
 (def image-size 100)
-(def max-iterations 130)
+(def max-iterations 100)
 (def polygon-count 120)
 (def mutation-chance 0.05)
 (def mutation-delta 30)
@@ -145,43 +145,30 @@
 
 ;; (stest/instrument)
 
+(defn execute [reference-image-data best-yet-individual best-yet-image-data best-yet-fitness candidate-individual candidate-image-data context]
+  (let [candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
+    (write-image-data-to-context best-yet-image-data context)
+    (if (> candidate-fitness best-yet-fitness)
+      (let [new-candidate (map mutate-polygon candidate-individual)
+            new-image-data (individual->image-data new-candidate)]
+        [candidate-individual candidate-image-data candidate-fitness new-candidate new-image-data])
+      (let [new-candidate (map mutate-polygon best-yet-individual)
+            new-image-data (individual->image-data new-candidate)]
+        [best-yet-individual best-yet-image-data best-yet-fitness new-candidate new-image-data]))))
+
 (defn run []
-  (println "Starting")
   (let [reference-image-data (reference-image->image-data)
         individual (generate-random-individual)
         individual-image-data (individual->image-data individual)
-        context (find-individual-context)]
-    (go-loop [x max-iterations
-              best-yet-individual individual
-              best-yet-image-data individual-image-data
-              best-yet-fitness (calculate-fitness reference-image-data best-yet-image-data)
-              candidate-individual individual
-              candidate-image-data individual-image-data]
-             (println "it: " x)
-             (when (> x 0)
-               (write-image-data-to-context best-yet-image-data context)
-               (let [candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
-                 (if (> candidate-fitness best-yet-fitness)
-                   (let [new-candidate (map mutate-polygon candidate-individual)
-                         new-image-data (individual->image-data new-candidate)]
-                     (recur (dec x)
-                            candidate-individual
-                            candidate-image-data
-                            candidate-fitness
-                            new-candidate
-                            new-image-data))
-                   (let [new-candidate (map mutate-polygon best-yet-individual)
-                         new-image-data (individual->image-data new-candidate)]
-                     (recur (dec x)
-                            best-yet-individual
-                            best-yet-image-data
-                            best-yet-fitness
-                            new-candidate
-                            new-image-data))))))))
+        context (find-individual-context)
+        best-yet-individual individual
+        best-yet-image-data individual-image-data
+        best-yet-fitness (calculate-fitness reference-image-data best-yet-image-data)
+        candidate-individual individual
+        candidate-image-data individual-image-data]
+    (execute reference-image-data best-yet-individual best-yet-image-data best-yet-fitness candidate-individual candidate-image-data context)))
 
 (.addEventListener
   js/window
   "DOMContentLoaded"
-  (let [individual (generate-random-individual)
-        context (find-individual-context)]
-    (run)))
+  (run))
