@@ -101,7 +101,7 @@
   difference between the two, which represents how similar the two images are."
   (let [differences (map - reference-image-data individual-image-data)
         squares (map #(* % %) differences)
-        sum-of-squares (reduce + squares)
+        sum-of-squares (areduce squares i ret 0 (+ ret (aget squares i)))
         maximum-difference (* (count reference-image-data)
                               (* 256 256))]
     (- 1 (/ sum-of-squares maximum-difference))))
@@ -143,7 +143,7 @@
         (update ::b maybe-mutate)
         (update ::a maybe-mutate-float)))
 
-(stest/instrument)
+;; (stest/instrument)
 
 (defn run []
   (println "Starting")
@@ -160,7 +160,6 @@
              (println "it: " x)
              (when (> x 0)
                (write-image-data-to-context best-yet-image-data context)
-               (<! (timeout 0))
                (let [candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
                  (if (> candidate-fitness best-yet-fitness)
                    (let [new-candidate (map mutate-polygon candidate-individual)
