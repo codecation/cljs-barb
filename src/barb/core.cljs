@@ -172,7 +172,8 @@
                ::candidate-individual new-candidate
                ::candidate-image-data new-image-data)))))
 
-(defn run []
+(defn setup []
+  "Sets up the initial state atom"
   (let [individual (generate-random-individual)
         individual-image-data (individual->image-data individual)
         reference-image-data (reference-image->image-data)]
@@ -187,10 +188,14 @@
              ::best-yet-fitness (calculate-fitness reference-image-data individual-image-data)
              ::candidate-individual individual
              ::candidate-image-data individual-image-data
-             })
-    (println @state)
-    (write-image-data-to-context (::best-yet-image-data @state) (::context @state))
-    (update-state)))
+             })))
+
+(defn run []
+  "The run loop, calculates the new state and updates the UI."
+  (update-state)
+  (write-image-data-to-context 
+    (::best-yet-image-data @state)
+    (::context @state)))
 
 (.addEventListener
   js/window
