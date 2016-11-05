@@ -13,7 +13,7 @@
 (enable-console-print!)
 
 (def image-size 100)
-(def max-iterations 30)
+(def max-iterations 130)
 (def polygon-count 120)
 (def mutation-chance 0.05)
 (def mutation-delta 30)
@@ -24,9 +24,9 @@
 
 (defn context->image-data [context]
   "Takes a js context and returns a vector of rgba image data"
-  (.from js/Array
-         (.-data
-           (.getImageData context 0 0 image-size image-size))))
+  (array-seq
+    (.-data
+      (.getImageData context 0 0 image-size image-size))))
 
 (defn reference-image->image-data []
   (let [canvas (.getElementById js/document "reference-canvas")
@@ -143,7 +143,7 @@
         (update ::b maybe-mutate)
         (update ::a maybe-mutate-float)))
 
-;; (stest/instrument)
+(stest/instrument)
 
 (defn run []
   (println "Starting")
