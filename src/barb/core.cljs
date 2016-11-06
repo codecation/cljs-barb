@@ -101,7 +101,7 @@
   difference between the two, which represents how similar the two images are."
   (let [differences (map - reference-image-data individual-image-data)
         squares (map #(* % %) differences)
-        sum-of-squares (areduce squares i ret 0 (+ ret (aget squares i)))
+        sum-of-squares (reduce + squares)
         maximum-difference (* (count reference-image-data)
                               (* 256 256))]
     (- 1 (/ sum-of-squares maximum-difference))))
@@ -143,12 +143,9 @@
         (update ::b maybe-mutate)
         (update ::a maybe-mutate-float)))
 
-(stest/instrument)
-
 (def state (atom {}))
 
-(defn update-state
-  []
+(defn update-state []
   (let [{reference-image-data ::reference-image-data
          best-yet-individual ::best-yet-individual
          best-yet-image-data ::best-yet-image-data
@@ -158,19 +155,21 @@
          context ::context} @state
         candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
     (if (> candidate-fitness best-yet-fitness)
-      (let [new-candidate (map mutate-polygon candidate-individual)
-            new-image-data (individual->image-data new-candidate)]
-        (swap! state assoc
-               ::best-yet-individual candidate-individual
-               ::best-yet-image-data candidate-image-data
-               ::best-yet-fitness candidate-fitness
-               ::candidate-individual new-candidate
-               ::candidate-image-data new-image-data))
-      (let [new-candidate (map mutate-polygon best-yet-individual)
-            new-image-data (individual->image-data new-candidate)]
-        (swap! state assoc
-               ::candidate-individual new-candidate
-               ::candidate-image-data new-image-data)))))
+      (do
+        (let [new-candidate (map mutate-polygon candidate-individual)
+              new-image-data (individual->image-data new-candidate)]
+          (swap! state assoc
+                ::best-yet-individual candidate-individual
+                ::best-yet-image-data candidate-image-data
+                ::best-yet-fitness candidate-fitness
+                ::candidate-individual new-candidate
+                ::candidate-image-data new-image-data)))
+      (do
+        (let [new-candidate (map mutate-polygon best-yet-individual)
+              new-image-data (individual->image-data new-candidate)]
+          (swap! state assoc
+                ::candidate-individual new-candidate
+                ::candidate-image-data new-image-data))))))
 
 (defn setup []
   "Sets up the initial state atom"
@@ -190,14 +189,20 @@
              ::candidate-image-data individual-image-data
              })))
 
-(defn run []
-  "The run loop, calculates the new state and updates the UI."
+(defn randoms []
+  (take 40000 (repeatedly #(rand-int 255))))
+
+(defn recursive-update []
+  "Updates state, requests an update to the UI, and calls itself again."
   (update-state)
-  (write-image-data-to-context 
-    (::best-yet-image-data @state)
-    (::context @state)))
+  (write-image-data-to-context
+    (randoms)
+    (find-individual-context))
+  (.requestAnimationFrame js/window recursive-update))
 
 (.addEventListener
   js/window
   "DOMContentLoaded"
-  (run))
+  (do
+    (setup)
+    (.requestAnimationFrame js/window recursive-update)))
