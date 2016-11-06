@@ -15,9 +15,9 @@
 (def image-size 100)
 (def max-iterations 100)
 (def polygon-count 120)
-(def mutation-chance 0.05)
-(def mutation-delta 30)
-(def mutation-float-delta 0.2)
+(def mutation-chance 0.10)
+(def mutation-delta 40)
+(def mutation-float-delta 0.3)
 
 (defn log [x]
   (.log js/console x))
@@ -97,14 +97,20 @@
 
 (defn calculate-fitness [reference-image-data individual-image-data]
   "Takes two vectors of ints 0-255, representing the rgba data for our
-  reference image and individual-image-data, returns the sum of squares
+  reference image and individual-image-data. Returns the sum of squares
   difference between the two, which represents how similar the two images are."
-  (let [differences (map - reference-image-data individual-image-data)
-        squares (map #(* % %) differences)
-        sum-of-squares (reduce + squares)
-        maximum-difference (* (count reference-image-data)
+  (let [maximum-difference (* (count reference-image-data)
                               (* 256 256))]
-    (- 1 (/ sum-of-squares maximum-difference))))
+    (loop [r-data reference-image-data
+           i-data individual-image-data
+           sum 0]
+      (if (empty? r-data)
+        (- 1 (/ sum maximum-difference))
+        (let [diff (- (first r-data) (first i-data))
+              square (* diff diff)]
+          (recur (rest r-data)
+                 (rest i-data)
+                 (+ sum square)))))))
 
 (defn write-image-data-to-context [image-data-to-write context]
   (let [clamped-array (js/Uint8ClampedArray. image-data-to-write)
@@ -155,7 +161,6 @@
          context ::context} @state
         candidate-fitness (calculate-fitness reference-image-data candidate-image-data)]
     (if (> candidate-fitness best-yet-fitness)
-      (do
         (let [new-candidate (map mutate-polygon candidate-individual)
               new-image-data (individual->image-data new-candidate)]
           (swap! state assoc
@@ -163,13 +168,12 @@
                 ::best-yet-image-data candidate-image-data
                 ::best-yet-fitness candidate-fitness
                 ::candidate-individual new-candidate
-                ::candidate-image-data new-image-data)))
-      (do
+                ::candidate-image-data new-image-data))
         (let [new-candidate (map mutate-polygon best-yet-individual)
               new-image-data (individual->image-data new-candidate)]
           (swap! state assoc
                 ::candidate-individual new-candidate
-                ::candidate-image-data new-image-data))))))
+                ::candidate-image-data new-image-data)))))
 
 (defn setup []
   "Sets up the initial state atom"
@@ -189,14 +193,16 @@
              ::candidate-image-data individual-image-data
              })))
 
+
 (defn randoms []
   (take 40000 (repeatedly #(rand-int 255))))
 
 (defn recursive-update []
-  "Updates state, requests an update to the UI, and calls itself again."
+  "Updates state, updates the canvas, and calls itself again."
   (update-state)
+  (println (::best-yet-fitness @state))
   (write-image-data-to-context
-    (randoms)
+    (::candidate-image-data @state)
     (find-individual-context))
   (.requestAnimationFrame js/window recursive-update))
 
