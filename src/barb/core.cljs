@@ -202,7 +202,6 @@
     (find-individual-context))
   (.requestAnimationFrame js/window recursive-update))
 
-
 (.addEventListener
   js/window
   "DOMContentLoaded"
