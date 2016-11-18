@@ -193,10 +193,6 @@
              ::candidate-image-data individual-image-data
              })))
 
-
-(defn randoms []
-  (take 40000 (repeatedly #(rand-int 255))))
-
 (defn recursive-update []
   "Updates state, updates the canvas, and calls itself again."
   (update-state)
@@ -205,6 +201,7 @@
     (::candidate-image-data @state)
     (find-individual-context))
   (.requestAnimationFrame js/window recursive-update))
+
 
 (.addEventListener
   js/window
